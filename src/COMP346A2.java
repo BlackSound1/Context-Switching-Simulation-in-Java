@@ -8,7 +8,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class COMP346A2 {
+public class COMP346A2
+{
+    static int numOfCPUs = 0;
 
     public static void main(String[] args) {
         ArrayList<Process> listOfProcessObjects = new ArrayList<Process>();
@@ -53,7 +55,6 @@ public class COMP346A2 {
     {
         int processNbr = 0;
         ArrayList<Process> listOfProcessObjects = new ArrayList<Process>();
-        int numOfCPUs = 0;
         String processID;
         int arrivalTime;
         int totalExecTime;
@@ -100,5 +101,5 @@ public class COMP346A2 {
         return listOfProcessObjects;
     }
 
-    }
+}
 
