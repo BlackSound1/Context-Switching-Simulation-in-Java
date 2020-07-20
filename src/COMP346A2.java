@@ -9,11 +9,14 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class COMP346A2 {
+
     public static void main(String[] args) {
+        ArrayList<Process> listOfProcessObjects = new ArrayList<Process>();
+
         Scanner sc = null;
         try {
             sc = new Scanner(new FileInputStream(
-                    "/users/lauraboivin/Desktop/Comp346/A2/input.txt"));
+                    "text/input.txt"));
         }
 
         catch (FileNotFoundException e) {
@@ -22,7 +25,7 @@ public class COMP346A2 {
             System.exit(0);
         }
 
-        readFile(sc);
+        listOfProcessObjects = readFile(sc);
 
         System.out.println("TEST");
         Thread TESTTHREAD = new Thread(new Process());
@@ -46,7 +49,8 @@ public class COMP346A2 {
 
     }
 
-    private static ArrayList readFile(Scanner sc){
+    private static ArrayList readFile(Scanner sc)
+    {
         int processNbr = 0;
         ArrayList<Process> listOfProcessObjects = new ArrayList<Process>();
         int numOfCPUs = 0;
@@ -92,16 +96,9 @@ public class COMP346A2 {
             }
 
         }
-       /*
-       for (int i =0; i<listOfProcessObjects.size(); i++)
-        {
-            System.out.println(listOfProcessObjects.get(i));
-       }
-        */
+
         return listOfProcessObjects;
     }
-
-
 
     }
 
