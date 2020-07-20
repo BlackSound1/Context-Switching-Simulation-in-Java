@@ -15,16 +15,15 @@ public class Process implements Runnable{
         arrivalTime = -1;
         totalExecutionTime = -1;
         IORequestTime = null;
-        status = null;
+        status = ProcessState.NEW;
     }
 
-    public Process(String PID, int arrivalTime, int totalExecutionTime, ArrayList<Integer> IORequestTime,
-                   ProcessState status) {
+    public Process(String PID, int arrivalTime, int totalExecutionTime, ArrayList<Integer> IORequestTime) {
         this.PID = PID;
         this.arrivalTime = arrivalTime;
         this.totalExecutionTime = totalExecutionTime;
         this.IORequestTime = IORequestTime;
-        this.status = status;
+        status = ProcessState.NEW;
     }
 
     public String getPID() {
@@ -80,6 +79,9 @@ public class Process implements Runnable{
 
     @Override
     public void run() {
+        status = ProcessState.READY;
+        status = ProcessState.RUNNING;
         System.out.println("\n" + toString());
+        status = ProcessState.TERMINATED;
     }
 }
