@@ -13,7 +13,9 @@ public class COMP346A2
     static int numOfCPUs = 0;
 
     public static void main(String[] args) {
-        ArrayList<Process> listOfProcessObjects = new ArrayList<Process>();
+        ArrayList<Process> listOfProcessObjects;
+        ArrayList<CPU> listOfCPUObjects = new ArrayList<>();
+        ArrayList<Thread> listOfThreadObjects = new ArrayList<>();
 
         Scanner sc = null;
         try {
@@ -27,57 +29,107 @@ public class COMP346A2
             System.exit(0);
         }
 
+        // Gets the list of all Processes
         listOfProcessObjects = readFile(sc);
 
-        System.out.println("TEST");
-        Thread TESTTHREAD = new Thread(new Process());
-        TESTTHREAD.start();
+        // Fills up list of CPUs with new CPUs based on the numOfCPUs
+        for (int i = 0; i < numOfCPUs; i++) {
+            CPU cpu = new CPU();
+            cpu.setCPUID(i);
+            listOfCPUObjects.add(cpu);
+        }
+
+        System.out.println("TESTING");
+
+        assignProcessesToCPUs(listOfProcessObjects, listOfCPUObjects);
+
+        // Create listOfCPUObjects.size() threads
+        /*for (Process process : listOfProcessObjects) {
+            listOfThreadObjects.add(new Thread(listOfCPUObjects.get()));
+        }*/
+
+        for (CPU listOfCPUObject : listOfCPUObjects) {
+            listOfThreadObjects.add(new Thread(listOfCPUObject));
+        }
+
+
+
+        // Run all Threads
+        for (Thread thread: listOfThreadObjects) {
+            thread.start();
+        }
+
+    }
+
+    private static void assignProcessesToCPUs(ArrayList<Process> processes, ArrayList<CPU> cpus){
+        // If there are more Processes than CPUs...
+        if (processes.size() > cpus.size()){
+            // Loop cpus.size() times and...
+            for (int i = 0; i < cpus.size(); i++) {
+                // assign Processes to CPUs
+                cpus.get(i).setProcess(processes.get(i));
+            }
+        // If there are more CPUs than Processes...
+        }else if (processes.size() < cpus.size()){
+            // Loop processes.size() times and...
+            for (int i = 0; i < processes.size(); i++) {
+                // assign Processes to CPUs
+                cpus.get(i).setProcess(processes.get(i));
+            }
+        // If they have the same count...
+        }else {
+            // It doesn't matter if we count processes.size() or cpus.size() times
+            for (int i = 0; i < processes.size(); i++) {
+                // assign Processes to CPUs
+                cpus.get(i).setProcess(processes.get(i));
+            }
+        }
     }
 
 
-    private void firstComeFirstServe(){
+    private static void firstComeFirstServe(){
 
     }
 
-    private void shortestJobFirst(){
+    private static void shortestJobFirst(){
 
     }
 
-    private void roundRobin(int timeQuantum){
+    private static void roundRobin(int timeQuantum){
 
     }
 
-    private void shortestRemainingTimeFirst(){
+    private static void shortestRemainingTimeFirst(){
 
     }
 
-    private static ArrayList readFile(Scanner sc)
+    private static ArrayList<Process> readFile(Scanner sc)
     {
         int processNbr = 0;
-        ArrayList<Process> listOfProcessObjects = new ArrayList<Process>();
+        ArrayList<Process> listOfProcessObjects = new ArrayList<>();
         String processID;
         int arrivalTime;
         int totalExecTime;
 
-        String str = null;
+        String str;
 
         while (sc.hasNextLine())
         {
             str = sc.nextLine();
 
             if (str.contains("numOfCPUs:")) {
-                String cpus[] = str.split("\\s+");
+                String[] cpus = str.split("\\s+");
                 numOfCPUs = Integer.parseInt(cpus[cpus.length-1]);
             }
 
             if (str.contains("p" + processNbr)) {
 
-                String lineArray[] = str.split("\\s+");
+                String[] lineArray = str.split("\\s+");
 
                 processID = lineArray[0];
                 arrivalTime = Integer.parseInt(lineArray[1]);
                 totalExecTime = Integer.parseInt(lineArray[2]);
-                ArrayList<Integer> IO_RequestAtTime = new ArrayList<Integer>();
+                ArrayList<Integer> IO_RequestAtTime = new ArrayList<>();
 
                 if(lineArray.length>3)
                 {
