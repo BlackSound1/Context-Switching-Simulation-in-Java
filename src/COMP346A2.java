@@ -1,16 +1,20 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.Scanner;
+
 /**
  * @author Matthew Segal
  * @author Laura Boivin
  *
  */
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Scanner;
-
 public class COMP346A2
 {
     static int numOfCPUs = 0;
+    static Queue<CPU> readyQueue;
+    static Queue<Process> processQueue;
+
 
     public static void main(String[] args) {
         ArrayList<Process> listOfProcessObjects;
@@ -19,45 +23,47 @@ public class COMP346A2
 
         Scanner sc = null;
         try {
-            sc = new Scanner(new FileInputStream(
-                    "text/input.txt"));
-        }
-
-        catch (FileNotFoundException e) {
+            sc = new Scanner(new FileInputStream("text/input.txt"));
+        }catch (FileNotFoundException e) {
             System.out.println("Error in the path to the text file.");
-            sc.close();
             System.exit(0);
         }
 
         // Gets the list of all Processes
         listOfProcessObjects = readFile(sc);
 
-        // Fills up list of CPUs with new CPUs based on the numOfCPUs
+        // Sets all Processes to READY
+        for (Process process: listOfProcessObjects) {
+            process.setStatus(ProcessState.READY);
+        }
+
+
+
+        /*// Fills up list of CPUs with new CPUs based on the numOfCPUs
         for (int i = 0; i < numOfCPUs; i++) {
             CPU cpu = new CPU();
             cpu.setCPUID(i);
-            listOfCPUObjects.add(cpu);
-        }
+            cpu.setState(CPUState.READY);
+            //listOfCPUObjects.add(cpu);
+            if (cpu.getState() == CPUState.READY){
+                readyQueue.add(cpu);
+            }
+        }*/
 
         System.out.println("TESTING");
 
-        assignProcessesToCPUs(listOfProcessObjects, listOfCPUObjects);
+        //assignProcessesToCPUs(listOfProcessObjects, listOfCPUObjects);
 
         // Create listOfCPUObjects.size() threads
         /*for (Process process : listOfProcessObjects) {
             listOfThreadObjects.add(new Thread(listOfCPUObjects.get()));
         }*/
 
-        for (CPU listOfCPUObject : listOfCPUObjects) {
+        /*for (CPU listOfCPUObject : listOfCPUObjects) {
             listOfThreadObjects.add(new Thread(listOfCPUObject));
-        }
+        }*/
 
 
-
-        // Run all Threads
-        for (Thread thread: listOfThreadObjects) {
-            thread.start();
-        }
 
     }
 
@@ -85,7 +91,6 @@ public class COMP346A2
             }
         }
     }
-
 
     private static void firstComeFirstServe(){
 
@@ -147,11 +152,8 @@ public class COMP346A2
                 IO_RequestAtTime = null;
                 processNbr++;
             }
-
         }
-
         return listOfProcessObjects;
     }
-
 }
 

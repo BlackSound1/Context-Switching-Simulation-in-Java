@@ -1,4 +1,4 @@
-public class CPU implements Runnable {
+public class CPU  {
     private Process process;
     private int CPUID;
     private CPUState state;
@@ -44,10 +44,4 @@ public class CPU implements Runnable {
                 '}';
     }
 
-    @Override
-    public void run() {
-        if (process != null){
-            System.out.println("CPU:" + CPUID + ": " + process.toString());
-        }
-    }
 }
