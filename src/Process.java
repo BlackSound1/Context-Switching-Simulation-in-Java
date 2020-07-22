@@ -3,7 +3,7 @@ import java.util.ArrayList;
 /**
  * A class for defining a Process
  */
-public class Process implements Runnable{
+public class Process{
     private String PID;
     private int arrivalTime;
     private int totalExecutionTime;
@@ -77,11 +77,4 @@ public class Process implements Runnable{
                 '}';
     }
 
-    @Override
-    public void run() {
-        status = ProcessState.READY;
-        status = ProcessState.RUNNING;
-        System.out.println("\n" + toString());
-        status = ProcessState.TERMINATED;
-    }
 }
