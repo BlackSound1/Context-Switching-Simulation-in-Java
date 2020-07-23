@@ -15,11 +15,13 @@ public class COMP346A2
     static int numOfCPUs = 0;
     static Queue<CPU> readyQueue = new LinkedList<>();
     static Queue<Process> processQueue = new LinkedList<>();
-
+    static Queue<IODevice> IOReadyQueue = new LinkedList<>();
 
     public static void main(String[] args) {
         ArrayList<Process> listOfProcessObjects;
         ArrayList<CPU> listOfCPUObjects = new ArrayList<>();
+        IODevice ioDevice = new IODevice();
+        ioDevice.setIOID(0);
 
         Scanner sc = null;
         try {
@@ -51,16 +53,20 @@ public class COMP346A2
             readyQueue.add(cpu);
         }
 
+        // Inserts IODevice into it's Queue
+        IOReadyQueue.add(ioDevice);
+
+        // MAIN CODE
         System.out.println("Now performing a simulation based on FCFS...");
-        firstComeFirstServe(listOfCPUObjects, listOfProcessObjects);
+        firstComeFirstServe(listOfCPUObjects, listOfProcessObjects, ioDevice);
         System.out.println("FCFS simulation finished!");
 
         System.out.println("Now performing a simulation based on SJF...");
-        shortestJobFirst(listOfCPUObjects, listOfProcessObjects);
+        shortestJobFirst(listOfCPUObjects, listOfProcessObjects, ioDevice);
         System.out.println("SJF simulation finished!");
 
         System.out.println("Now performing a simulation based on SRTF...");
-        shortestRemainingTimeFirst(listOfCPUObjects, listOfProcessObjects);
+        shortestRemainingTimeFirst(listOfCPUObjects, listOfProcessObjects, ioDevice);
         System.out.println("SRTF simulation finished!");
 
         System.out.print("Now for Round-robin. Please choose an integer time-quantum: ");
@@ -69,13 +75,17 @@ public class COMP346A2
         sc = new Scanner(System.in);
         int quantum = sc.nextInt();
 
-        roundRobin(quantum, listOfCPUObjects, listOfProcessObjects);
+        roundRobin(quantum, listOfCPUObjects, listOfProcessObjects, ioDevice);
         System.out.println("RR simulation finished!");
 
         System.out.println("THE PROGRAM FINISHES");
 
         //assignProcessesToCPUs(listOfProcessObjects, listOfCPUObjects);
 
+    }
+
+    private static void resetAllIO(IODevice device){
+        device.setStatus(IODeviceState.READY);
     }
 
     private static void resetAllCPUs(ArrayList<CPU> cpus){
@@ -92,24 +102,28 @@ public class COMP346A2
         }
     }
 
-    private static void firstComeFirstServe(ArrayList<CPU> cpus, ArrayList<Process> processes){
+    private static void firstComeFirstServe(ArrayList<CPU> cpus, ArrayList<Process> processes, IODevice device){
         resetAllCPUs(cpus);
         resetAllProcesses(processes);
+        resetAllIO(device);
     }
 
-    private static void shortestJobFirst(ArrayList<CPU> cpus, ArrayList<Process> processes){
+    private static void shortestJobFirst(ArrayList<CPU> cpus, ArrayList<Process> processes, IODevice device){
         resetAllCPUs(cpus);
         resetAllProcesses(processes);
+        resetAllIO(device);
     }
 
-    private static void roundRobin(int timeQuantum, ArrayList<CPU> cpus, ArrayList<Process> processes){
+    private static void roundRobin(int timeQuantum, ArrayList<CPU> cpus, ArrayList<Process> processes, IODevice device){
         resetAllCPUs(cpus);
         resetAllProcesses(processes);
+        resetAllIO(device);
     }
 
-    private static void shortestRemainingTimeFirst(ArrayList<CPU> cpus, ArrayList<Process> processes){
+    private static void shortestRemainingTimeFirst(ArrayList<CPU> cpus, ArrayList<Process> processes, IODevice device){
         resetAllCPUs(cpus);
         resetAllProcesses(processes);
+        resetAllIO(device);
     }
 
     private static ArrayList<Process> readFile(Scanner sc)

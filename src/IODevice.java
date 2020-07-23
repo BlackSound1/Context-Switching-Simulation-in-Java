@@ -1,15 +1,18 @@
 public class IODevice {
     private int IOID;
     private Process process;
+    private IODeviceState status;
 
     public IODevice() {
         IOID = -1;
         process = null;
+        status = IODeviceState.READY;
     }
 
     public IODevice(int IOID, Process process) {
         this.IOID = IOID;
         this.process = process;
+        status = IODeviceState.READY;
     }
 
     public int getIOID() {
@@ -28,5 +31,7 @@ public class IODevice {
         this.process = process;
     }
 
+    public IODeviceState getStatus() { return status; }
 
+    public void setStatus(IODeviceState status) { this.status = status; }
 }
