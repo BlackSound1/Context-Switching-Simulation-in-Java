@@ -79,9 +79,6 @@ public class COMP346A2
         System.out.println("RR simulation finished!");
 
         System.out.println("THE PROGRAM FINISHES");
-
-        //assignProcessesToCPUs(listOfProcessObjects, listOfCPUObjects);
-
     }
 
     private static void resetAllIO(IODevice device){
