@@ -71,9 +71,10 @@ public class COMP346A2
 
         System.out.print("Now for Round-robin. Please choose an integer time-quantum: ");
         // Sets up Scanner for user input
-        sc.close();
+        sc.close(); // closes Scanner to the file
         sc = new Scanner(System.in);
         int quantum = sc.nextInt();
+        sc.close(); // closes Scanner to user input
 
         roundRobin(quantum, listOfCPUObjects, listOfProcessObjects, ioDevice);
         System.out.println("RR simulation finished!");
