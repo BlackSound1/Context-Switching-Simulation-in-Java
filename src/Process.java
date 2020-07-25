@@ -9,6 +9,7 @@ public class Process{
     private int totalExecutionTime;
     private ArrayList<Integer> IORequestTime;
     private ProcessState status;
+    private int IOTimer;
 
     public Process() {
         PID = "NULL";
@@ -16,6 +17,7 @@ public class Process{
         totalExecutionTime = -1;
         IORequestTime = null;
         status = ProcessState.NEW;
+        IOTimer = 0;
     }
 
     public Process(String PID, int arrivalTime, int totalExecutionTime, ArrayList<Integer> IORequestTime) {
@@ -24,6 +26,7 @@ public class Process{
         this.totalExecutionTime = totalExecutionTime;
         this.IORequestTime = IORequestTime;
         status = ProcessState.NEW;
+        IOTimer = 0;
     }
 
     public String getPID() {
@@ -62,9 +65,11 @@ public class Process{
         return status;
     }
 
-    public void setStatus(ProcessState status) {
-        this.status = status;
-    }
+    public void setStatus(ProcessState status) { this.status = status; }
+
+    public int getIOTimer() { return IOTimer; }
+
+    public void setIOTimer(int IOTimer) { this.IOTimer = IOTimer; }
 
     @Override
     public String toString() {
@@ -76,5 +81,4 @@ public class Process{
                 ", status=" + status +
                 '}';
     }
-
 }
