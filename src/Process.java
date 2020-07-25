@@ -1,15 +1,21 @@
+import com.sun.deploy.security.RootCertStore;
+
 import java.util.ArrayList;
 
 /**
  * A class for defining a Process
  */
-public class Process{
+public class Process implements Comparable{
     private String PID;
     private int arrivalTime;
     private int totalExecutionTime;
     private ArrayList<Integer> IORequestTime;
     private ProcessState status;
     private int IOTimer;
+    //private int lifeTimeTimer;
+    private boolean hasBeenProcessed;
+    private boolean isWaiting;
+    private int executionTime;
 
     public Process() {
         PID = "NULL";
@@ -18,6 +24,9 @@ public class Process{
         IORequestTime = null;
         status = ProcessState.NEW;
         IOTimer = 0;
+        hasBeenProcessed = false;
+        isWaiting = false;
+        executionTime = 0;
     }
 
     public Process(String PID, int arrivalTime, int totalExecutionTime, ArrayList<Integer> IORequestTime) {
@@ -27,6 +36,9 @@ public class Process{
         this.IORequestTime = IORequestTime;
         status = ProcessState.NEW;
         IOTimer = 0;
+        hasBeenProcessed = false;
+        isWaiting = false;
+        executionTime = 0;
     }
 
     public String getPID() {
@@ -71,6 +83,26 @@ public class Process{
 
     public void setIOTimer(int IOTimer) { this.IOTimer = IOTimer; }
 
+    /*public int getLifeTimeTimer() { return lifeTimeTimer; }
+
+    public void setLifeTimeTimer(int lifeTimeTimer) { this.lifeTimeTimer = lifeTimeTimer; }*/
+
+    public boolean getHasBeenProcessed() { return hasBeenProcessed; }
+
+    public void setHasBeenProcessed(boolean hasBeenProcessed) { this.hasBeenProcessed = hasBeenProcessed; }
+
+    public boolean getIsWaiting() { return isWaiting; }
+
+    public void setIsWaiting(boolean waiting) { isWaiting = waiting; }
+
+    public int getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(int executionTime) {
+        this.executionTime = executionTime;
+    }
+
     @Override
     public String toString() {
         return "Process{" +
@@ -81,4 +113,13 @@ public class Process{
                 ", status=" + status +
                 '}';
     }
+
+    @Override
+    public int compareTo(Object process) {
+        int arrivalTimeToCompare = ((Process)process).arrivalTime;
+        return this.arrivalTime - arrivalTimeToCompare;
+    }
+
+
+
 }

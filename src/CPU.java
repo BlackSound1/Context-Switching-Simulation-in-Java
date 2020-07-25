@@ -2,11 +2,13 @@ public class CPU  {
     private Process process;
     private int CPUID;
     private CPUState state;
+    private int utilization;
 
     public CPU() {
         process = null;
         CPUID = -1;
         state = CPUState.BUSY;
+        utilization = 0;
     }
 
     public CPU(Process process) {
@@ -36,6 +38,10 @@ public class CPU  {
     public void setState(CPUState state) {
         this.state = state;
     }
+
+    public int getUtilization() { return utilization; }
+
+    public void setUtilization(int utilization) { this.utilization = utilization; }
 
     @Override
     public String toString() {
