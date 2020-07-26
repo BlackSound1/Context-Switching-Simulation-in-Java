@@ -13,6 +13,7 @@ public class COMP346A2
     static int numOfCPUs = 0;
     static Queue<CPU> readyQueue = new LinkedList<>();
     static Queue<Process> processQueue = new LinkedList<>();
+    static PriorityQueue<Process> processPriorityQueue = new PriorityQueue<>();
     static Scanner sc;
 
     public static void main(String[] args) {
@@ -71,101 +72,6 @@ public class COMP346A2
         sc.close(); // closes Scanner to user input
     }
 
-    private static void resetScanner(){
-        sc.close();
-        setScannerToFileMode();
-    }
-
-    private static void setScannerToFileMode(){
-        try {
-            sc = new Scanner(new FileInputStream("text/input.txt"));
-        }catch (FileNotFoundException e) {
-            System.out.println("Error in the path to the text file.");
-            System.exit(0);
-        }
-    }
-
-    private static void setScannerToUserMode(){
-        sc = new Scanner(System.in);
-    }
-
-    private static void resetAllCPUs(ArrayList<CPU> cpus){
-        for (CPU cpu: cpus) {
-            cpu.setState(CPUState.READY);
-            readyQueue.add(cpu);
-        }
-    }
-
-    private static void printProcesses(ArrayList<Process> listOfProcessObjects){
-        // DISPLAYS INFO OF EACH PROCESS
-        System.out.println("The Process are as follows:");
-        for (Process process : listOfProcessObjects) {
-            System.out.println(process.toString());
-        }
-    }
-
-    private static boolean checkIfAllTerminated(ArrayList<Process> processes){
-        int terminatedCounter = 0;
-        for (Process process : processes) {
-            if (process.getStatus().equals(ProcessState.TERMINATED)){
-                terminatedCounter++;
-            }
-        }
-        return terminatedCounter == processes.size();
-    }
-
-    private static void displayCPUUtilization(ArrayList<CPU> cpus, int timeUnit){
-        for (CPU cpu : cpus) {
-            System.out.println("CPU:" + cpu.getCPUID() + " has been used for " + cpu.getUtilization() + "/"
-                    + timeUnit + " time");
-        }
-    }
-
-    private static void displayAverageWaitTime(ArrayList<Process> processes){
-        double waitSum;
-        ArrayList<Double> averagePerProcess = new ArrayList<>();
-        double average =0;
-
-        for (Process process : processes){
-            waitSum = 0;
-            for(int i = 0; i<process.getWaitTimeArrayList().size(); i++){
-                waitSum += process.getWaitTimeArrayList().get(i);
-            }
-            waitSum = waitSum/process.getWaitTimeArrayList().size();
-            averagePerProcess.add(0,waitSum);
-        }
-
-        for (int i = 0; i<averagePerProcess.size(); i++){
-            average += averagePerProcess.get(i);
-        }
-        average = average/averagePerProcess.size();
-        System.out.println("The average wait time is "+ average + " time units.");
-    }
-
-    private static void displayTurnaroundTime(ArrayList<Process> processes) {
-        int turnaroundTime;
-        int waitSum;
-        for (Process process : processes){
-            turnaroundTime =0;
-            waitSum = 0;
-            for (int i = 0; i<process.getWaitTimeArrayList().size();i++){
-               waitSum = waitSum + process.getWaitTimeArrayList().get(i);
-            }
-            waitSum += process.getTotalExecutionTime();
-            if (process.getIORequestTime()!=null)
-            waitSum += (process.getNbIORequests()*2);
-            turnaroundTime = waitSum - process.getArrivalTime();
-            process.setTurnaroundPerProcess(turnaroundTime);
-            System.out.println("Process "+ process.getPID()+" has a turnaround time of "+process.getTurnaroundPerProcess()+" time unit(s).");
-        }
-    }
-
-    private static void displayCpuResponseTime(ArrayList<Process> processes){
-        for (Process process : processes){
-            System.out.println("The CPU response time for process "+ process.getPID()+ " was: "+process.getCpuResponseTime());
-        }
-    }
-
     private static void firstComeFirstServe(ArrayList<CPU> cpus, ArrayList<Process> processes){
         resetAllCPUs(cpus);
 
@@ -178,20 +84,7 @@ public class COMP346A2
             process.setNbIORequests(process.getIORequestTime().size());
         }
 
-
         while (!checkIfAllTerminated(processes)) {
-            //System.out.println("timeUnit is now "+timeUnit);
-            // Handles checking if each Process is TERMINATED
-            /*int terminatedCounter = 0;
-            for (Process process : processes) {
-                if (process.getStatus().equals(ProcessState.TERMINATED)){
-                    terminatedCounter++;
-                }
-            }
-
-            // If each Process is TERMINATED, leave the loop
-            if (terminatedCounter == processes.size() ){ break; }*/
-
             // IO REQUESTS
             // Loops through all CPUs
             for (CPU cpu : cpus) {
@@ -288,7 +181,7 @@ public class COMP346A2
                     if (pro.getStatus().equals(ProcessState.READY)){
                     pro.setWaitTimeTimer(pro.getWaitTimeTimer()+1);
                     }
-                    if(pro.getStatus()== ProcessState.READY && pro.getCpuResponse()==false){
+                    if(pro.getStatus()== ProcessState.READY && !pro.getCpuResponse()){
                         pro.setCpuResponseTime(pro.getCpuResponseTime()+1);
                     }
                 }
@@ -306,6 +199,11 @@ public class COMP346A2
             }
             timeUnit++;
             //System.out.println("LOOPING");
+        }
+
+        // Clears out readyQueue
+        while (!readyQueue.isEmpty()){
+            readyQueue.remove();
         }
 
         System.out.println("\nHere are the methods at the end of the FCFS simulation:");
@@ -333,13 +231,161 @@ public class COMP346A2
         System.out.println();
     }
 
-
-    private static void shortestJobFirst(ArrayList<CPU> cpus, ArrayList<Process> processes){
+    private static void roundRobin(int timeQuantum, ArrayList<CPU> cpus, ArrayList<Process> processes){
         resetAllCPUs(cpus);
 
         printProcesses(processes);
 
-        System.out.println("\nHere are the methods at the end of the SJF simulation:");
+        int timeUnit = 0;
+
+        for(Process process : processes){
+            if (process.getIORequestTime()!=null)
+                process.setNbIORequests(process.getIORequestTime().size());
+        }
+
+        while (!checkIfAllTerminated(processes)) {
+            // IO REQUESTS
+            // Loops through all CPUs
+            for (CPU cpu : cpus) {
+                // If the CPU has a Process
+                if (cpu.getProcess() != null) {
+                    Process currentProcess = cpu.getProcess(); // Gets the Process
+
+                    if (currentProcess.getIORequestTime() != null && currentProcess.getIORequestTime().size() != 0 &&
+                            currentProcess.getIORequestTime().get(0) == currentProcess.getExecutionTime()) {
+
+                        // Remove Process from CPU, set CPU state to READY and add the CPU to the ready Queue
+                        cpu.setProcess(null);
+                        cpu.setState(CPUState.READY);
+                        //System.out.println("Process "+currentProcess.getPID()+" is waiting for io");
+                        //System.out.println("CPU "+ cpu.getCPUID()+ " is now ready and in the ready queue");
+                        readyQueue.add(cpu);
+
+                        currentProcess.getIORequestTime().remove(0); // Removes the used-up IO time
+
+                        currentProcess.setStatus(ProcessState.WAITING);
+                        currentProcess.setIsWaiting(true);
+                    }
+                }
+            }
+
+            // Loops through CPUs to see if any have reached the timeQuantum, if so,
+            // kick it off and reset timeQuantumTimer
+            for (CPU cpu : cpus) {
+                if (cpu.getProcess() != null && cpu.getTimeQuantumTimer() == timeQuantum){
+                    Process currentProcess = cpu.getProcess();
+                    cpu.setProcess(null);
+                    cpu.setState(CPUState.READY);
+                    readyQueue.add(cpu);
+                    cpu.setTimeQuantumTimer(0);
+                    currentProcess.setStatus(ProcessState.READY);
+                    processQueue.add(currentProcess);
+                }
+            }
+
+            // Loops through the processList, if the ioRequest timer is done, add the process to the process queue and if there is one that has an arrival time of now,
+            // add it to the processQueue otherwise if the process has reached its total execution time then change the status to terminated
+            for (Process process : processes) {
+
+                //optimal results when processes are added to the process queue at the start of this loop
+                if (process.getArrivalTime() == timeUnit) {
+                    process.setStatus(ProcessState.READY);
+                    processQueue.add(process);
+                    //System.out.println("Process " + process.getPID() + " added to processQueue");
+                }
+
+                if (process.getIOTimer() == 2) {
+                    process.setIOTimer(0); // Resets IOTimer
+                    process.setIsWaiting(false); // Resets if its waiting
+                    processQueue.add(process);
+                    process.setStatus(ProcessState.READY); //L: just a logical swap of order
+                    //System.out.println("Process " + process.getPID() + " added to processQueue");
+                }
+
+                if (!readyQueue.isEmpty() && !processQueue.isEmpty()) {
+                    if (process.getStatus().equals(ProcessState.READY)) {
+                        CPU currentCPU = readyQueue.remove(); // Remove CPU from readyQueue
+                        //System.out.print(readyQueue);
+                        // Gets current Process from Queue
+                        Process currentProcess = processQueue.remove();// Remove Process from processQueue
+
+                        //System.out.println("Current CPU:" + currentCPU.getCPUID());
+                        currentCPU.setProcess(currentProcess); // Set the Process to the CPU
+                        //System.out.println("Process " + currentProcess.getPID() + " added to CPU " + currentCPU.getCPUID());
+
+                        // Sets the statuses of the Process and CPU
+
+                        currentCPU.setState(CPUState.BUSY);
+                        //System.out.println("CPU " + currentCPU.getCPUID() + " is now busy");
+                        currentProcess.setStatus(ProcessState.RUNNING);
+                        currentProcess.setCpuResponse(true);
+                        //adding the wait time timer to the wait time array list in currentProcess and setting the wait time timer back to 0
+                        currentProcess.getWaitTimeArrayList().add(0,currentProcess.getWaitTimeTimer());
+                        currentProcess.setWaitTimeTimer(0);
+                    }
+                }
+
+                // If the execution time is over, set it to TERMINATED
+                if (process.getTotalExecutionTime() == process.getExecutionTime()) {
+                    process.setStatus(ProcessState.TERMINATED);
+                    //System.out.println("Process " + process.getPID() + " is TERMINATED");
+
+                    for (CPU cpu : cpus) {
+                        if (cpu.getProcess() != null && cpu.getProcess().getStatus().equals(ProcessState.TERMINATED)) {
+                            cpu.setProcess(null);
+                            cpu.setState(CPUState.READY);
+                            readyQueue.add(cpu);
+                        }
+                    }
+                }
+            }
+
+            // Increase the lifetime timer for all processes that have started to be serviced and aren't WAITING
+            // and increase the IOTimer if it's WAITING
+            for (Process pro : processes) {
+                if (pro.getStatus() != ProcessState.TERMINATED) {
+                    /*if (pro.getHasBeenProcessed() && !pro.getIsWaiting()){
+                        pro.setLifeTimeTimer(pro.getLifeTimeTimer() + 1);
+                    }*/
+
+                    if (pro.getIsWaiting()) {
+                        pro.setIOTimer(pro.getIOTimer() + 1);
+                    }
+
+                    //Increment the wait time timer for each process with status "Ready"
+                    if (pro.getStatus().equals(ProcessState.READY)){
+                        pro.setWaitTimeTimer(pro.getWaitTimeTimer()+1);
+                    }
+
+                    if(pro.getStatus()== ProcessState.READY && !pro.getCpuResponse()){
+                        pro.setCpuResponseTime(pro.getCpuResponseTime()+1);
+                    }
+                }
+            }
+
+            // Increases executionTime as long a a Process is on a CPU (therefore RUNNING)
+            // Also, increments a CPUs utilization time
+            for (CPU cpu : cpus) {
+                if (cpu.getProcess() != null && cpu.getProcess().getStatus().equals(ProcessState.RUNNING)) { // L: changed condition from "not terminated" to "is running" because the cpu execution time should not increase if process status is "waiting"
+                    Process currentProcess = cpu.getProcess();
+                    currentProcess.setExecutionTime(currentProcess.getExecutionTime() + 1);
+                    //System.out.println("Process " + currentProcess.getPID() + " execution time is now " + currentProcess.getExecutionTime());
+                    cpu.setUtilization(cpu.getUtilization() + 1);
+
+                    // Increments the CPUs timeQuantumTimer
+                    cpu.setTimeQuantumTimer(cpu.getTimeQuantumTimer() + 1);
+                }
+            }
+            timeUnit++;
+            //System.out.println("LOOPING");
+        }
+
+        // Clears out readyQueue
+        while (!readyQueue.isEmpty()){
+            readyQueue.remove();
+        }
+
+        System.out.println("\nHere are the methods at the end of the RR simulation:");
         for (Process p : processes) {
             System.out.println(p.toString());
         }
@@ -347,15 +393,34 @@ public class COMP346A2
         System.out.println();
 
         // HANDLES DISPLAYING CPU UTILIZATION
-        //displayCPUUtilization(cpus, timeUnit);
+        displayCPUUtilization(cpus, timeUnit);
+
+        System.out.println();
+
+        displayAverageWaitTime(processes);
+
+        System.out.println();
+
+        displayTurnaroundTime(processes);
+
+        System.out.println();
+
+        displayCpuResponseTime(processes);
+
+        System.out.println();
     }
 
-    private static void roundRobin(int timeQuantum, ArrayList<CPU> cpus, ArrayList<Process> processes){
+    private static void shortestJobFirst(ArrayList<CPU> cpus, ArrayList<Process> processes){
         resetAllCPUs(cpus);
 
         printProcesses(processes);
 
-        System.out.println("\nHere are the methods at the end of the RR simulation:");
+        // Clears out readyQueue
+        while (!readyQueue.isEmpty()){
+            readyQueue.remove();
+        }
+
+        System.out.println("\nHere are the methods at the end of the SJF simulation:");
         for (Process p : processes) {
             System.out.println(p.toString());
         }
@@ -370,6 +435,11 @@ public class COMP346A2
         resetAllCPUs(cpus);
 
         printProcesses(processes);
+
+        // Clears out readyQueue
+        while (!readyQueue.isEmpty()){
+            readyQueue.remove();
+        }
 
         System.out.println("\nHere are the methods at the end of the SRTF simulation:");
         for (Process p : processes) {
@@ -428,6 +498,103 @@ public class COMP346A2
             }
         }
         return listOfProcessObjects;
+    }
+
+    private static void resetScanner(){
+        sc.close();
+        setScannerToFileMode();
+    }
+
+    private static void setScannerToFileMode(){
+        try {
+            sc = new Scanner(new FileInputStream("text/input.txt"));
+        }catch (FileNotFoundException e) {
+            System.out.println("Error in the path to the text file.");
+            System.exit(0);
+        }
+    }
+
+    private static void setScannerToUserMode(){
+        sc = new Scanner(System.in);
+    }
+
+    private static void resetAllCPUs(ArrayList<CPU> cpus){
+        for (CPU cpu: cpus) {
+            cpu.setState(CPUState.READY);
+            cpu.setUtilization(0);
+            readyQueue.add(cpu);
+        }
+    }
+
+    private static void printProcesses(ArrayList<Process> listOfProcessObjects){
+        // DISPLAYS INFO OF EACH PROCESS
+        System.out.println("The Process are as follows:");
+        for (Process process : listOfProcessObjects) {
+            System.out.println(process.toString());
+        }
+    }
+
+    private static boolean checkIfAllTerminated(ArrayList<Process> processes){
+        int terminatedCounter = 0;
+        for (Process process : processes) {
+            if (process.getStatus().equals(ProcessState.TERMINATED)){
+                terminatedCounter++;
+            }
+        }
+        return terminatedCounter == processes.size();
+    }
+
+    private static void displayCPUUtilization(ArrayList<CPU> cpus, int timeUnit){
+        for (CPU cpu : cpus) {
+            System.out.println("CPU:" + cpu.getCPUID() + " has been used for " + cpu.getUtilization() + "/"
+                    + timeUnit + " time");
+        }
+    }
+
+    private static void displayAverageWaitTime(ArrayList<Process> processes){
+        double waitSum;
+        ArrayList<Double> averagePerProcess = new ArrayList<>();
+        double average =0;
+
+        for (Process process : processes){
+            waitSum = 0;
+            for(int i = 0; i<process.getWaitTimeArrayList().size(); i++){
+                waitSum += process.getWaitTimeArrayList().get(i);
+            }
+            waitSum = waitSum/process.getWaitTimeArrayList().size();
+            averagePerProcess.add(0,waitSum);
+        }
+
+        for (Double perProcess : averagePerProcess) {
+            average += perProcess;
+        }
+
+        average = average/averagePerProcess.size();
+        System.out.println("The average wait time is "+ average + " time units.");
+    }
+
+    private static void displayTurnaroundTime(ArrayList<Process> processes) {
+        int turnaroundTime;
+        int waitSum;
+        for (Process process : processes){
+            turnaroundTime =0;
+            waitSum = 0;
+            for (int i = 0; i<process.getWaitTimeArrayList().size();i++){
+                waitSum = waitSum + process.getWaitTimeArrayList().get(i);
+            }
+            waitSum += process.getTotalExecutionTime();
+            if (process.getIORequestTime()!=null)
+                waitSum += (process.getNbIORequests()*2);
+            turnaroundTime = waitSum - process.getArrivalTime();
+            process.setTurnaroundPerProcess(turnaroundTime);
+            System.out.println("Process "+ process.getPID()+" has a turnaround time of "+process.getTurnaroundPerProcess()+" time unit(s).");
+        }
+    }
+
+    private static void displayCpuResponseTime(ArrayList<Process> processes){
+        for (Process process : processes){
+            System.out.println("The CPU response time for process "+ process.getPID()+ " was: "+process.getCpuResponseTime());
+        }
     }
 
     /*private static void resetAllProcesses(ArrayList<Process> processes){

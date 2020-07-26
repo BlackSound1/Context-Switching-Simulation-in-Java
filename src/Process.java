@@ -19,7 +19,6 @@ public class Process implements Comparable{
     private boolean CpuResponse;
     private int CpuResponseTime;
 
-
     public Process() {
         PID = "NULL";
         arrivalTime = -1;
@@ -89,9 +88,7 @@ public class Process implements Comparable{
 
     public int getTotalExecutionTime() { return totalExecutionTime; }
 
-    public ArrayList<Integer> getIORequestTime() {
-        return IORequestTime;
-    }
+    public ArrayList<Integer> getIORequestTime() { return IORequestTime; }
 
     public ProcessState getStatus() {
         return status;
