@@ -597,6 +597,7 @@ public class COMP346A2
         }
 
         while (!checkIfAllTerminated(processes)) {
+
             // IO REQUESTS
             // Loops through all CPUs
             for (CPU cpu : cpus) {
@@ -618,22 +619,14 @@ public class COMP346A2
 
                         currentProcess.setStatus(ProcessState.WAITING);
                         currentProcess.setIsWaiting(true);
-                    }
 
-                    if (!SRTFPriorityQueue.isEmpty() &&
-                            SRTFPriorityQueue.peek().getRemainingTime() < currentProcess.getRemainingTime() &&
-                            currentProcess.getRemainingTime() > 0){
-                        cpu.setProcess(null);
-                        cpu.setState(CPUState.READY);
-
-                        readyQueue.add(cpu);
-
-                        Process temp = SRTFPriorityQueue.remove();
-                        SRTFPriorityQueue.add(currentProcess);
-                        currentProcess.setStatus(ProcessState.READY);
-                        cpu.setProcess(temp);
-                        cpu.setState(CPUState.BUSY);
-                        temp.setStatus(ProcessState.RUNNING);
+                        if (SRTFPriorityQueue.peek() != null){
+                            Process newProcess = SRTFPriorityQueue.remove();
+                            newProcess.setStatus(ProcessState.RUNNING);
+                            cpu.setState(CPUState.BUSY);
+                            cpu.setProcess(newProcess);
+                            readyQueue.remove();
+                        }
                     }
                 }
             }
@@ -676,7 +669,8 @@ public class COMP346A2
                         //System.out.println("CPU " + currentCPU.getCPUID() + " is now busy");
                         currentProcess.setStatus(ProcessState.RUNNING);
                         currentProcess.setCpuResponse(true);
-                        //adding the wait time timer to the wait time array list in currentProcess and setting the wait time timer back to 0
+                        // adding the wait time timer to the wait time array list in currentProcess and
+                        // setting the wait time timer back to 0
                         currentProcess.getWaitTimeArrayList().add(0,currentProcess.getWaitTimeTimer());
                         currentProcess.setWaitTimeTimer(0);
                     }
@@ -727,6 +721,32 @@ public class COMP346A2
                     cpu.setUtilization(cpu.getUtilization() + 1);
                 }
             }
+
+            //SRTFPriorityQueue.clear();
+            for (CPU cpu : cpus){
+                Process currentProcess = cpu.getProcess();
+                if (!SRTFPriorityQueue.isEmpty() && currentProcess != null &&
+                        SRTFPriorityQueue.peek().getRemainingTime() < currentProcess.getRemainingTime() &&
+                        currentProcess.getRemainingTime() > 0) {
+                    cpu.setProcess(null);
+                    cpu.setState(CPUState.READY);
+
+                    readyQueue.add(cpu);
+
+                    Process temp = SRTFPriorityQueue.remove();
+                    SRTFPriorityQueue.add(currentProcess);
+                    currentProcess.setStatus(ProcessState.READY);
+                    cpu.setProcess(temp);
+                    cpu.setState(CPUState.BUSY);
+                    temp.setStatus(ProcessState.RUNNING);
+                    readyQueue.remove();
+                }
+            }
+
+            for (Process p : processes) {
+                p.setRemainingTime(p.getTotalExecutionTime() - p.getExecutionTime());
+            }
+
             timeUnit++;
             //System.out.println("LOOPING");
         }
