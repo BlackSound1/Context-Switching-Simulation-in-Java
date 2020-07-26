@@ -1,5 +1,6 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -120,12 +121,63 @@ public class COMP346A2
         }
     }
 
+    private static void displayAverageWaitTime(ArrayList<Process> processes){
+        double waitSum;
+        ArrayList<Double> averagePerProcess = new ArrayList<>();
+        double average =0;
+
+        for (Process process : processes){
+            waitSum = 0;
+            for(int i = 0; i<process.getWaitTimeArrayList().size(); i++){
+                waitSum += process.getWaitTimeArrayList().get(i);
+            }
+            waitSum = waitSum/process.getWaitTimeArrayList().size();
+            averagePerProcess.add(0,waitSum);
+        }
+
+        for (int i = 0; i<averagePerProcess.size(); i++){
+            average += averagePerProcess.get(i);
+        }
+        average = average/averagePerProcess.size();
+        System.out.println("The average wait time is "+ average + " time units.");
+    }
+
+    private static void displayTurnaroundTime(ArrayList<Process> processes) {
+        int turnaroundTime;
+        int waitSum;
+        for (Process process : processes){
+            turnaroundTime =0;
+            waitSum = 0;
+            for (int i = 0; i<process.getWaitTimeArrayList().size();i++){
+               waitSum = waitSum + process.getWaitTimeArrayList().get(i);
+            }
+            waitSum += process.getTotalExecutionTime();
+            if (process.getIORequestTime()!=null)
+            waitSum += (process.getNbIORequests()*2);
+            turnaroundTime = waitSum - process.getArrivalTime();
+            process.setTurnaroundPerProcess(turnaroundTime);
+            System.out.println("Process "+ process.getPID()+" has a turnaround time of "+process.getTurnaroundPerProcess()+" time unit(s).");
+        }
+    }
+
+    private static void displayCpuResponseTime(ArrayList<Process> processes){
+        for (Process process : processes){
+            System.out.println("The CPU response time for process "+ process.getPID()+ " was: "+process.getCpuResponseTime());
+        }
+    }
+
     private static void firstComeFirstServe(ArrayList<CPU> cpus, ArrayList<Process> processes){
         resetAllCPUs(cpus);
 
         printProcesses(processes);
 
         int timeUnit = 0;
+
+        for(Process process : processes){
+            if (process.getIORequestTime()!=null)
+            process.setNbIORequests(process.getIORequestTime().size());
+        }
+
 
         while (!checkIfAllTerminated(processes)) {
             //System.out.println("timeUnit is now "+timeUnit);
@@ -147,7 +199,6 @@ public class COMP346A2
                 if (cpu.getProcess() != null) {
                     Process currentProcess = cpu.getProcess(); // Gets the Process
 
-                    //L: this isn't associated with the unit time, only the execution time
                     if (currentProcess.getIORequestTime() != null && currentProcess.getIORequestTime().size() != 0 &&
                             currentProcess.getIORequestTime().get(0) == currentProcess.getExecutionTime()) {
 
@@ -169,6 +220,14 @@ public class COMP346A2
             // Loops through the processList, if the ioRequest timer is done, add the process to the process queue and if there is one that has an arrival time of now,
             // add it to the processQueue otherwise if the process has reached its total execution time then change the status to terminated
             for (Process process : processes) {
+
+                //optimal results when processes are added to the process queue at the start of this loop
+                if (process.getArrivalTime() == timeUnit) {
+                    process.setStatus(ProcessState.READY);
+                    processQueue.add(process);
+                    //System.out.println("Process " + process.getPID() + " added to processQueue");
+                }
+
                 if (process.getIOTimer() == 2) {
                     process.setIOTimer(0); // Resets IOTimer
                     process.setIsWaiting(false); // Resets if its waiting
@@ -193,13 +252,11 @@ public class COMP346A2
                         currentCPU.setState(CPUState.BUSY);
                         //System.out.println("CPU " + currentCPU.getCPUID() + " is now busy");
                         currentProcess.setStatus(ProcessState.RUNNING);
+                        currentProcess.setCpuResponse(true);
+                        //adding the wait time timer to the wait time array list in currentProcess and setting the wait time timer back to 0
+                        currentProcess.getWaitTimeArrayList().add(0,currentProcess.getWaitTimeTimer());
+                        currentProcess.setWaitTimeTimer(0);
                     }
-                }
-
-                if (process.getArrivalTime() == timeUnit) {
-                    process.setStatus(ProcessState.READY);
-                    processQueue.add(process);
-                    //System.out.println("Process " + process.getPID() + " added to processQueue");
                 }
 
                 // If the execution time is over, set it to TERMINATED
@@ -227,6 +284,13 @@ public class COMP346A2
                     if (pro.getIsWaiting()) {
                         pro.setIOTimer(pro.getIOTimer() + 1);
                     }
+                    //Increment the wait time timer for each process with status "Ready"
+                    if (pro.getStatus().equals(ProcessState.READY)){
+                    pro.setWaitTimeTimer(pro.getWaitTimeTimer()+1);
+                    }
+                    if(pro.getStatus()== ProcessState.READY && pro.getCpuResponse()==false){
+                        pro.setCpuResponseTime(pro.getCpuResponseTime()+1);
+                    }
                 }
             }
 
@@ -253,6 +317,20 @@ public class COMP346A2
 
         // HANDLES DISPLAYING CPU UTILIZATION
         displayCPUUtilization(cpus, timeUnit);
+
+        System.out.println();
+
+        displayAverageWaitTime(processes);
+
+        System.out.println();
+
+        displayTurnaroundTime(processes);
+
+        System.out.println();
+
+        displayCpuResponseTime(processes);
+
+        System.out.println();
     }
 
 
