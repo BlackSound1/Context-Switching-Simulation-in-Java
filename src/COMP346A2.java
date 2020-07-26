@@ -577,7 +577,6 @@ public class COMP346A2
         int turnaroundTime;
         int waitSum;
         for (Process process : processes){
-            turnaroundTime =0;
             waitSum = 0;
             for (int i = 0; i<process.getWaitTimeArrayList().size();i++){
                 waitSum = waitSum + process.getWaitTimeArrayList().get(i);
@@ -585,7 +584,7 @@ public class COMP346A2
             waitSum += process.getTotalExecutionTime();
             if (process.getIORequestTime()!=null)
                 waitSum += (process.getNbIORequests()*2);
-            turnaroundTime = waitSum - process.getArrivalTime();
+            turnaroundTime = waitSum; // - process.getArrivalTime();
             process.setTurnaroundPerProcess(turnaroundTime);
             System.out.println("Process "+ process.getPID()+" has a turnaround time of "+process.getTurnaroundPerProcess()+" time unit(s).");
         }
