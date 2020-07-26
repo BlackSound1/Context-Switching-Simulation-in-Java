@@ -18,6 +18,7 @@ public class Process implements Comparable{
     private int nbIORequests;
     private boolean CpuResponse;
     private int CpuResponseTime;
+    private int remainingTime;
 
     public Process() {
         PID = "NULL";
@@ -34,6 +35,7 @@ public class Process implements Comparable{
         nbIORequests =0;
         CpuResponse =false;
         CpuResponseTime = 0;
+        remainingTime = totalExecutionTime - executionTime;
     }
 
     public Process(String PID, int arrivalTime, int totalExecutionTime, ArrayList<Integer> IORequestTime) {
@@ -51,6 +53,7 @@ public class Process implements Comparable{
         nbIORequests =0;
         CpuResponse = false;
         CpuResponseTime = 0;
+        remainingTime = totalExecutionTime - executionTime;
     }
     public int getCpuResponseTime() { return CpuResponseTime; }
 
@@ -106,10 +109,24 @@ public class Process implements Comparable{
 
     public int getExecutionTime() { return executionTime; }
 
-
     public void setExecutionTime(int executionTime) {
         this.executionTime = executionTime;
     }
+
+    public int getRemainingTime() { return remainingTime; }
+
+    public void setRemainingTime(int remainingTime) { this.remainingTime = remainingTime; }
+
+    /*@Override
+    public String toString() {
+        return "Process{" +
+                "PID='" + PID + '\'' +
+                ", arrivalTime=" + arrivalTime +
+                ", totalExecutionTime=" + totalExecutionTime +
+                ", IORequestTime=" + IORequestTime +
+                ", status=" + status +
+                '}';
+    }*/
 
     @Override
     public String toString() {
@@ -119,6 +136,16 @@ public class Process implements Comparable{
                 ", totalExecutionTime=" + totalExecutionTime +
                 ", IORequestTime=" + IORequestTime +
                 ", status=" + status +
+                ", IOTimer=" + IOTimer +
+                ", isWaiting=" + isWaiting +
+                ", executionTime=" + executionTime +
+                ", waitTimeTimer=" + waitTimeTimer +
+                ", waitTimeArrayList=" + waitTimeArrayList +
+                ", turnaroundPerProcess=" + turnaroundPerProcess +
+                ", nbIORequests=" + nbIORequests +
+                ", CpuResponse=" + CpuResponse +
+                ", CpuResponseTime=" + CpuResponseTime +
+                ", remainingTime=" + remainingTime +
                 '}';
     }
 
