@@ -597,7 +597,7 @@ public class COMP346A2
         }
 
         while (!checkIfAllTerminated(processes)) {
-
+            //System.out.println("TimeUnit is now: " + timeUnit);
             // IO REQUESTS
             // Loops through all CPUs
             for (CPU cpu : cpus) {
@@ -616,17 +616,18 @@ public class COMP346A2
                         readyQueue.add(cpu);
 
                         currentProcess.getIORequestTime().remove(0); // Removes the used-up IO time
+                        //System.out.println("Process " + currentProcess.getPID() + " has had an IO request removed");
 
                         currentProcess.setStatus(ProcessState.WAITING);
                         currentProcess.setIsWaiting(true);
 
-                        if (SRTFPriorityQueue.peek() != null){
+                        /*if (SRTFPriorityQueue.peek() != null){
                             Process newProcess = SRTFPriorityQueue.remove();
                             newProcess.setStatus(ProcessState.RUNNING);
                             cpu.setState(CPUState.BUSY);
                             cpu.setProcess(newProcess);
                             readyQueue.remove();
-                        }
+                        }*/
                     }
                 }
             }
@@ -677,7 +678,7 @@ public class COMP346A2
                 }
 
                 // If the execution time is over, set it to TERMINATED
-                if (process.getTotalExecutionTime() == process.getExecutionTime()) {
+                if (process.getTotalExecutionTime() == process.getExecutionTime() && process.getIORequestTime() == null) {
                     process.setStatus(ProcessState.TERMINATED);
                     //System.out.println("Process " + process.getPID() + " is TERMINATED");
 
@@ -744,7 +745,11 @@ public class COMP346A2
             }
 
             for (Process p : processes) {
-                p.setRemainingTime(p.getTotalExecutionTime() - p.getExecutionTime());
+                if (p.getRemainingTime() == 0){
+                    p.setStatus(ProcessState.TERMINATED);
+                }else{
+                    p.setRemainingTime(p.getTotalExecutionTime() - p.getExecutionTime());
+                }
             }
 
             timeUnit++;
