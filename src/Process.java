@@ -128,6 +128,4 @@ public class Process implements Comparable{
         return this.arrivalTime - arrivalTimeToCompare;
     }
 
-
-
 }
