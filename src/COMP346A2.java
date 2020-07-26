@@ -47,14 +47,12 @@ public class COMP346A2
             listOfCPUObjects.add(cpu);
         }
 
-        // Sets all CPUs to READY and inserts into Queue
+        /*// Sets all CPUs to READY and inserts into Queue
         for (CPU cpu: listOfCPUObjects) {
             cpu.setState(CPUState.READY);
             readyQueue.add(cpu);
-        }
+        }*/
 
-        /*// Inserts IODevice into it's Queue
-        IOReadyQueue.add(ioDevice);*/
 
         // DISPLAYS INFO OF EACH PROCESS
         for (Process process : listOfProcessObjects) {
@@ -112,7 +110,9 @@ public class COMP346A2
 
         int timeUnit = 0;
 
+
         while (true){
+            System.out.println("timeUnit is now "+timeUnit);
             // Handles checking if each Process is TERMINATED
             int terminatedCounter = 0;
             for (Process process : processes) {
@@ -125,30 +125,107 @@ public class COMP346A2
             if (terminatedCounter == processes.size() ){ break; }
 
             System.out.println(processes.get(0));
-
-            for (Process process : processes) {
-                if (!process.getStatus().equals(ProcessState.TERMINATED) && process.getIOTimer() == 2) {
-                    process.setStatus(ProcessState.READY);
-                    process.setIOTimer(0); // Resets IOTimer
-                    process.setIsWaiting(false); // Resets if its waiting
-                    processQueue.add(process);
-                    System.out.println("Process " + process.getPID() + "added to processQueue");
-                }
-            }
+            System.out.println(processes.get(1));
+            System.out.println(processes.get(2));
+            System.out.println(processes.get(3));
 
             // Loops through the processList, and if there is one that has an arrival time of now,
             // add it to the processQueue
-            for (Process process: processes) {
+            /*for (Process process: processes) {
                 if (process.getArrivalTime() == timeUnit){
                     process.setStatus(ProcessState.READY);
                     processQueue.add(process);
+                    System.out.println("Process " + process.getPID() + " added to processQueue");
                     // If the execution time is over, set it to TERMINATED
                 }else if (process.getTotalExecutionTime() == process.getExecutionTime()){
                     process.setStatus(ProcessState.TERMINATED);
                     System.out.println("Process " + process.getPID() + " is TERMINATED");
                 }
+            }*/
 
+            // IO REQUESTS
+            // Loops through all CPUs
+            for (CPU cpu: cpus) {
+                // If the CPU has a Process
+                if (cpu.getProcess() != null){
+                    Process currentProcess = cpu.getProcess(); // Gets the Process
 
+                    //L: this isn't associated with the unit time, only the execution time
+                    if (currentProcess.getIORequestTime() != null && currentProcess.getIORequestTime().size() != 0 &&
+                            currentProcess.getIORequestTime().get(0) == currentProcess.getExecutionTime()){
+
+                        // Remove Process from CPU, set CPU state to READY and add the CPU to the ready Queue
+                        cpu.setProcess(null);
+                        cpu.setState(CPUState.READY);
+                        System.out.println("Process "+currentProcess.getPID()+" is waiting for io");
+                        System.out.println("CPU "+ cpu.getCPUID()+ " is now ready and in the ready queue");
+                        readyQueue.add(cpu);
+
+                        currentProcess.getIORequestTime().remove(0); // Removes the used-up IO time
+
+                        currentProcess.setStatus(ProcessState.WAITING);
+                        currentProcess.setIsWaiting(true);
+
+                    }
+                }
+            }
+
+            // Loops through the processList, if the ioRequest timer is done, add the process to the process queue and if there is one that has an arrival time of now,
+            // add it to the processQueue otherwise if the process has reached its total execution time then change the status to terminated
+
+            for (Process process : processes) {
+                if (process.getIOTimer() == 2) {
+                    process.setIOTimer(0); // Resets IOTimer
+                    process.setIsWaiting(false); // Resets if its waiting
+                    processQueue.add(process);
+                    process.setStatus(ProcessState.READY); //L: just a logical swap of order
+                    System.out.println("Process " + process.getPID() + " added to processQueue");
+                }
+
+                if (!readyQueue.isEmpty() && !processQueue.isEmpty()){
+                    if (process.getStatus().equals(ProcessState.READY)){
+                        CPU currentCPU = readyQueue.remove(); // Remove CPU from readyQueue
+                        System.out.print(readyQueue);
+                        // Gets current Process from Queue
+                        Process currentProcess = processQueue.remove();// Remove Process from processQueue
+                        // Assign a Process to a CPU if the current time is its arrival time, or
+                        // if its arrival time has passed
+                        // if (currentProcess.getArrivalTime() <= timeUnit){ // we don't have to check this because block stating on line 165 has already taken care of adding process to the processQueue
+
+                        System.out.println("Current CPU:" + currentCPU.getCPUID());
+                    /*CPU test = readyQueue.peek();
+                    System.out.println("Test " +test.getCPUID());*/
+                        currentCPU.setProcess(currentProcess); // Set the Process to the CPU
+                        System.out.println("Process " + currentProcess.getPID() + " added to CPU " + currentCPU.getCPUID());
+
+                        // Sets the statuses of the Process and CPU
+
+                        currentCPU.setState(CPUState.BUSY);
+                        System.out.println("CPU " + currentCPU.getCPUID() + " is now busy");
+                        currentProcess.setStatus(ProcessState.RUNNING);
+                        // }
+                    }
+                }
+
+                if (process.getArrivalTime() == timeUnit){
+                    process.setStatus(ProcessState.READY);
+                    processQueue.add(process);
+                    System.out.println("Process " + process.getPID() + " added to processQueue");
+                }
+
+                // If the execution time is over, set it to TERMINATED
+                if (process.getTotalExecutionTime() == process.getExecutionTime()){
+                    process.setStatus(ProcessState.TERMINATED);
+                    System.out.println("Process " + process.getPID() + " is TERMINATED");
+
+                    for (CPU cpu : cpus) {
+                        if (cpu.getProcess() != null && cpu.getProcess().getStatus().equals(ProcessState.TERMINATED)){
+                            cpu.setProcess(null);
+                            cpu.setState(CPUState.READY);
+                            readyQueue.add(cpu);
+                        }
+                    }
+                }
             }
 
             /*// Handles putting Processes back into processQueue after their IOTimers are up
@@ -160,55 +237,6 @@ public class COMP346A2
                     processQueue.add(process);
                 }
             }*/
-
-            // IO REQUESTS
-            // Loops through all CPUs
-            for (CPU cpu: cpus) {
-                // If the CPU has a Process
-                if (cpu.getProcess() != null){
-                    Process currentProcess = cpu.getProcess(); // Gets the Process
-
-                    // If there is an IO time right now
-                    //ArrayList<Integer> IORequests = currentProcess.getIORequestTime();
-
-                    if (currentProcess.getIORequestTime() != null && currentProcess.getIORequestTime().get(0) + currentProcess.getExecutionTime() == timeUnit){
-                        // Remove Process from CPU, set CPU state to READY and add the CPU to the ready Queue
-                        cpu.setProcess(null);
-                        cpu.setState(CPUState.READY);
-                        readyQueue.add(cpu);
-
-                        currentProcess.getIORequestTime().remove(0); // Removes the used-up IO time
-
-                        currentProcess.setStatus(ProcessState.WAITING);
-                        currentProcess.setIsWaiting(true);
-                    }
-                }
-            }
-
-
-
-            //ASSIGNS CPU IF POSSIBLE
-            // First check if readyQueue has available CPUs
-            if (!readyQueue.isEmpty()){
-                // Then check if processQueue has Processes waiting to be processed
-                if (!processQueue.isEmpty()){
-                    // Gets current Process from Queue
-                    Process currentProcess = processQueue.peek();
-
-                    // Assign a Process to a CPU if the current time is its arrival time, or
-                    // if its arrival time has passed
-                    if (currentProcess.getArrivalTime() <= timeUnit){
-                        CPU currentCPU = readyQueue.remove(); // Remove CPU from readyQueue
-                        processQueue.remove(); // Remove Process from processQueue
-                        currentCPU.setProcess(currentProcess); // Set the Process to the CPU
-                        System.out.println("Process " + currentProcess.getPID() + " added to CPU " + currentCPU.getCPUID());
-
-                        // Sets the statuses of the Process and CPU
-                        currentCPU.setState(CPUState.BUSY);
-                        currentProcess.setStatus(ProcessState.RUNNING);
-                    }
-                }
-            }
 
             // Increase the lifetime timer for all processes that have started to be serviced and aren't WAITING
             // and increase the IOTimer if it's WAITING
@@ -226,7 +254,7 @@ public class COMP346A2
             // Increases executionTime as long a a Process is on a CPU (therefore RUNNING)
             // Also, increments a CPUs utilization time
             for (CPU cpu : cpus) {
-                if (cpu.getProcess() != null && !cpu.getProcess().getStatus().equals(ProcessState.TERMINATED)){
+                if (cpu.getProcess() != null && cpu.getProcess().getStatus().equals(ProcessState.RUNNING)){ // L: changed condition from "not terminated" to "is running" because the cpu execution time should not increase if process status is "waiting"
                     Process currentProcess = cpu.getProcess();
                     currentProcess.setExecutionTime(currentProcess.getExecutionTime() + 1);
                     System.out.println("Process " + currentProcess.getPID() + " execution time is now " + currentProcess.getExecutionTime());
@@ -234,7 +262,7 @@ public class COMP346A2
                 }
             }
 
-            ++timeUnit;
+            timeUnit++;
 
             System.out.println("LOOPING");
         }
