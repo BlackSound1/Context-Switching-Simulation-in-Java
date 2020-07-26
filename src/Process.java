@@ -18,6 +18,7 @@ public class Process implements Comparable{
     private int nbIORequests;
     private boolean CpuResponse;
     private int CpuResponseTime;
+    private int remainingTime = totalExecutionTime - executionTime;
 
     public Process() {
         PID = "NULL";
@@ -106,10 +107,13 @@ public class Process implements Comparable{
 
     public int getExecutionTime() { return executionTime; }
 
-
     public void setExecutionTime(int executionTime) {
         this.executionTime = executionTime;
     }
+
+    public int getRemainingTime() { return remainingTime; }
+
+    public void setRemainingTime(int remainingTime) { this.remainingTime = remainingTime; }
 
     @Override
     public String toString() {

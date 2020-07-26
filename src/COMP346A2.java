@@ -586,6 +586,151 @@ public class COMP346A2
 
         printProcesses(processes);
 
+        Comparator<Process> SRTFComparator = Comparator.comparing(Process::getRemainingTime);
+        PriorityQueue<Process> SRTFPriorityQueue = new PriorityQueue<>(SRTFComparator);
+
+        int timeUnit = 0;
+
+        for(Process process : processes){
+            if (process.getIORequestTime()!=null)
+                process.setNbIORequests(process.getIORequestTime().size());
+        }
+
+        while (!checkIfAllTerminated(processes)) {
+            // IO REQUESTS
+            // Loops through all CPUs
+            for (CPU cpu : cpus) {
+                // If the CPU has a Process
+                if (cpu.getProcess() != null) {
+                    Process currentProcess = cpu.getProcess(); // Gets the Process
+
+                    if (currentProcess.getIORequestTime() != null && currentProcess.getIORequestTime().size() != 0 &&
+                            currentProcess.getIORequestTime().get(0) == currentProcess.getExecutionTime()) {
+
+                        // Remove Process from CPU, set CPU state to READY and add the CPU to the ready Queue
+                        cpu.setProcess(null);
+                        cpu.setState(CPUState.READY);
+                        //System.out.println("Process "+currentProcess.getPID()+" is waiting for io");
+                        //System.out.println("CPU "+ cpu.getCPUID()+ " is now ready and in the ready queue");
+                        readyQueue.add(cpu);
+
+                        currentProcess.getIORequestTime().remove(0); // Removes the used-up IO time
+
+                        currentProcess.setStatus(ProcessState.WAITING);
+                        currentProcess.setIsWaiting(true);
+                    }
+
+                    if (!SRTFPriorityQueue.isEmpty() &&
+                            SRTFPriorityQueue.peek().getRemainingTime() < currentProcess.getRemainingTime() &&
+                            currentProcess.getRemainingTime() > 0){
+                        cpu.setProcess(null);
+                        cpu.setState(CPUState.READY);
+
+                        readyQueue.add(cpu);
+
+                        Process temp = SRTFPriorityQueue.remove();
+                        SRTFPriorityQueue.add(currentProcess);
+                        currentProcess.setStatus(ProcessState.READY);
+                        cpu.setProcess(temp);
+                        cpu.setState(CPUState.BUSY);
+                        temp.setStatus(ProcessState.RUNNING);
+                    }
+                }
+            }
+
+            for (Process pr : processes) {
+                //optimal results when processes are added to the process queue at the start of this loop
+                if (pr.getArrivalTime() == timeUnit) {
+                    pr.setStatus(ProcessState.READY);
+                    SRTFPriorityQueue.add(pr);
+                    //System.out.println("Process " + process.getPID() + " added to SRTFPriorityQueue");
+                }
+            }
+
+            // Loops through the processList, if the ioRequest timer is done, add the process to the process queue and
+            // if there is one that has an arrival time of now, add it to the SRTFPriorityQueue otherwise if the
+            // process has reached its total execution time then change the status to terminated
+            for (Process process : processes) {
+                if (process.getIOTimer() == 2) {
+                    process.setIOTimer(0); // Resets IOTimer
+                    process.setIsWaiting(false); // Resets if its waiting
+                    SRTFPriorityQueue.add(process);
+                    process.setStatus(ProcessState.READY); //L: just a logical swap of order
+                    //System.out.println("Process " + process.getPID() + " added to SRTFPriorityQueue");
+                }
+
+                if (!readyQueue.isEmpty() && !SRTFPriorityQueue.isEmpty()) {
+                    if (process.getStatus().equals(ProcessState.READY)) {
+                        CPU currentCPU = readyQueue.remove(); // Remove CPU from readyQueue
+                        //System.out.print(readyQueue);
+                        // Gets current Process from Queue
+                        Process currentProcess = SRTFPriorityQueue.remove();// Remove Process from SRTFPriorityQueue
+
+                        //System.out.println("Current CPU:" + currentCPU.getCPUID());
+                        currentCPU.setProcess(currentProcess); // Set the Process to the CPU
+                        //System.out.println("Process " + currentProcess.getPID() + " added to CPU " + currentCPU.getCPUID());
+
+                        // Sets the statuses of the Process and CPU
+
+                        currentCPU.setState(CPUState.BUSY);
+                        //System.out.println("CPU " + currentCPU.getCPUID() + " is now busy");
+                        currentProcess.setStatus(ProcessState.RUNNING);
+                        currentProcess.setCpuResponse(true);
+                        //adding the wait time timer to the wait time array list in currentProcess and setting the wait time timer back to 0
+                        currentProcess.getWaitTimeArrayList().add(0,currentProcess.getWaitTimeTimer());
+                        currentProcess.setWaitTimeTimer(0);
+                    }
+                }
+
+                // If the execution time is over, set it to TERMINATED
+                if (process.getTotalExecutionTime() == process.getExecutionTime()) {
+                    process.setStatus(ProcessState.TERMINATED);
+                    //System.out.println("Process " + process.getPID() + " is TERMINATED");
+
+                    for (CPU cpu : cpus) {
+                        if (cpu.getProcess() != null && cpu.getProcess().getStatus().equals(ProcessState.TERMINATED)) {
+                            cpu.setProcess(null);
+                            cpu.setState(CPUState.READY);
+                            readyQueue.add(cpu);
+                        }
+                    }
+                }
+            }
+
+            // Increase the lifetime timer for all processes that have started to be serviced and aren't WAITING
+            // and increase the IOTimer if it's WAITING
+            for (Process pro : processes) {
+                if (pro.getStatus() != ProcessState.TERMINATED) {
+                    /*if (pro.getHasBeenProcessed() && !pro.getIsWaiting()){
+                        pro.setLifeTimeTimer(pro.getLifeTimeTimer() + 1);
+                    }*/
+                    if (pro.getIsWaiting()) {
+                        pro.setIOTimer(pro.getIOTimer() + 1);
+                    }
+                    //Increment the wait time timer for each process with status "Ready"
+                    if (pro.getStatus().equals(ProcessState.READY)){
+                        pro.setWaitTimeTimer(pro.getWaitTimeTimer()+1);
+                    }
+                    if(pro.getStatus()== ProcessState.READY && !pro.getCpuResponse()){
+                        pro.setCpuResponseTime(pro.getCpuResponseTime()+1);
+                    }
+                }
+            }
+
+            // Increases executionTime as long a a Process is on a CPU (therefore RUNNING)
+            // Also, increments a CPUs utilization time
+            for (CPU cpu : cpus) {
+                if (cpu.getProcess() != null && cpu.getProcess().getStatus().equals(ProcessState.RUNNING)) { // L: changed condition from "not terminated" to "is running" because the cpu execution time should not increase if process status is "waiting"
+                    Process currentProcess = cpu.getProcess();
+                    currentProcess.setExecutionTime(currentProcess.getExecutionTime() + 1);
+                    //System.out.println("Process " + currentProcess.getPID() + " execution time is now " + currentProcess.getExecutionTime());
+                    cpu.setUtilization(cpu.getUtilization() + 1);
+                }
+            }
+            timeUnit++;
+            //System.out.println("LOOPING");
+        }
+
         // Clears out readyQueue
         while (!readyQueue.isEmpty()){
             readyQueue.remove();
@@ -599,7 +744,21 @@ public class COMP346A2
         System.out.println();
 
         // HANDLES DISPLAYING CPU UTILIZATION
-        //displayCPUUtilization(cpus, timeUnit);
+        displayCPUUtilization(cpus, timeUnit);
+
+        System.out.println();
+
+        displayAverageWaitTime(processes);
+
+        System.out.println();
+
+        displayTurnaroundTime(processes);
+
+        System.out.println();
+
+        displayCpuResponseTime(processes);
+
+        System.out.println();
     }
 
     private static ArrayList<Process> readFile()
